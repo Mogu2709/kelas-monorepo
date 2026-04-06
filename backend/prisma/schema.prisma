@@ -1,0 +1,201 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  admin
+  mahasiswa
+}
+
+enum StatusTugas {
+  baru
+  aktif
+  urgent
+  selesai
+}
+
+enum LabelPengumuman {
+  penting
+  info
+  jadwal
+}
+
+enum TipeMateri {
+  PDF
+  PPTX
+  MP4
+  DRAWIO
+  DOCX
+  ZIP
+  OTHER
+}
+
+model User {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  password  String
+  nama      String
+  inisial   String
+  color     String   @default("#7c5cbf")
+  role      Role     @default(mahasiswa)
+  nim       String?  @unique
+  tag       String
+  status    String   @default("offline")
+  avatarUrl String?  // ← BARU: URL foto profil (local atau cloud)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  pengumuman    Pengumuman[]
+  absensiDetail AbsensiDetail[]
+  messages      Message[]
+
+  @@map("users")
+}
+
+model Kelas {
+  id        String  @id @default(cuid())
+  nama      String
+  prodi     String
+  vault     String
+  bannerUrl String? // ← BARU: URL banner/foto server
+  iconUrl   String? // ← BARU: URL icon server
+
+  mataKuliah MataKuliah[]
+  tugas      Tugas[]
+  pengumuman Pengumuman[]
+  jadwal     Jadwal[]
+  absensi    Absensi[]
+
+  @@map("kelas")
+}
+
+model MataKuliah {
+  id      String @id @default(cuid())
+  kode    String
+  nama    String
+  dosen   String
+  sks     Int    @default(3) // ← BARU: jumlah SKS
+  kelasId String
+
+  kelas   Kelas     @relation(fields: [kelasId], references: [id])
+  tugas   Tugas[]
+  materi  Materi[]
+  jadwal  Jadwal[]
+  absensi Absensi[]
+
+  @@map("mata_kuliah")
+}
+
+model Pengumuman {
+  id        String          @id @default(cuid())
+  judul     String
+  isi       String
+  label     LabelPengumuman @default(info)
+  kelasId   String
+  authorId  String
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  kelas  Kelas @relation(fields: [kelasId], references: [id])
+  author User  @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@map("pengumuman")
+}
+
+model Tugas {
+  id        String      @id @default(cuid())
+  judul     String
+  deskripsi String?
+  deadline  DateTime
+  status    StatusTugas @default(baru)
+  terkumpul Int         @default(0)
+  total     Int         @default(32)
+  kelasId   String
+  matkulId  String
+
+  kelas  Kelas      @relation(fields: [kelasId], references: [id])
+  matkul MataKuliah @relation(fields: [matkulId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("tugas")
+}
+
+model Materi {
+  id       String     @id @default(cuid())
+  nama     String
+  tipe     TipeMateri @default(PDF)
+  ukuran   String
+  url      String?
+  baru     Boolean    @default(true)
+  matkulId String
+
+  matkul    MataKuliah @relation(fields: [matkulId], references: [id])
+  createdAt DateTime   @default(now())
+
+  @@map("materi")
+}
+
+model Jadwal {
+  id         String @id @default(cuid())
+  hari       String
+  jamMulai   String
+  jamSelesai String
+  ruang      String
+  kelasId    String
+  matkulId   String
+
+  kelas  Kelas      @relation(fields: [kelasId], references: [id])
+  matkul MataKuliah @relation(fields: [matkulId], references: [id])
+
+  @@map("jadwal")
+}
+
+model Absensi {
+  id       String   @id @default(cuid())
+  tanggal  DateTime
+  kelasId  String
+  matkulId String
+  total    Int      @default(32)
+
+  kelas   Kelas         @relation(fields: [kelasId], references: [id])
+  matkul  MataKuliah    @relation(fields: [matkulId], references: [id])
+  detail  AbsensiDetail[]
+
+  createdAt DateTime @default(now())
+
+  @@map("absensi")
+}
+
+model AbsensiDetail {
+  id        String @id @default(cuid())
+  absensiId String
+  userId    String
+  status    String
+
+  absensi Absensi @relation(fields: [absensiId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([absensiId, userId])
+  @@map("absensi_detail")
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  isi       String
+  kelasId   String
+  authorId  String
+  createdAt DateTime @default(now())
+
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@map("messages")
+}
