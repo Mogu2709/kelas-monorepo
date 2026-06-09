@@ -2,4 +2,4 @@
 builder = "nixpacks"
 
 [deploy]
-startCommand = "./node_modules/.bin/prisma migrate deploy && node src/index.js"
+startCommand = "./node_modules/.bin/prisma migrate resolve --rolled-back 20260405155858_init && ./node_modules/.bin/prisma migrate deploy && node src/index.js"
