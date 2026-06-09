@@ -1,5 +1,9 @@
-[build]
+[
+build
+]
 builder = "nixpacks"
 
-[deploy]
+[
+deploy
+]
 startCommand = "npx prisma migrate deploy && node src/index.js"
