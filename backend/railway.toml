@@ -2,4 +2,4 @@
 builder = "nixpacks"
 
 [deploy]
-startCommand = "./node_modules/.bin/prisma migrate deploy --schema ./prisma/schema.prisma && node src/index.js"
+startCommand = "cd backend && ./node_modules/.bin/prisma migrate deploy && node src/index.js"
