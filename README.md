@@ -1,82 +1,136 @@
-# kelas.id — Dashboard Kelas Universitas
+# kelas.id — Monorepo
 
-Dashboard kelas bergaya Discord + Obsidian, dibangun dengan React + Vite.
-
-## Cara menjalankan
-
-```bash
-npm install
-npm run dev
-```
-
-Buka browser di `http://localhost:5173`
+Stack: **React + Vite** (frontend) · **Express + Prisma** (backend) · **PostgreSQL** (database)
 
 ---
 
 ## Struktur folder
 
 ```
-src/
-├── components/
-│   ├── layout/          # Shell UI
-│   │   ├── ServerRail.jsx   — kolom ikon server (kiri)
-│   │   ├── Sidebar.jsx      — channel list + user panel
-│   │   ├── TopBar.jsx       — header atas
-│   │   └── MessageBar.jsx   — input bar bawah
-│   │
-│   ├── sections/        # Isi tiap "channel"
-│   │   ├── SectionDashboard.jsx
-│   │   ├── SectionPengumuman.jsx
-│   │   ├── SectionTugas.jsx
-│   │   ├── SectionMateri.jsx
-│   │   ├── SectionJadwal.jsx
-│   │   ├── SectionAbsensi.jsx
-│   │   └── SectionMahasiswa.jsx
-│   │
-│   └── ui/              # Komponen reusable
-│       ├── Avatar.jsx
-│       ├── Badge.jsx
-│       ├── ObsCard.jsx
-│       └── ProgressBar.jsx
-│
-├── context/
-│   └── AppContext.jsx    — state global (role, activeChannel)
-│
-├── data/
-│   └── index.js         — mock data (ganti dengan API call)
-│
-├── styles/
-│   ├── global.css       — CSS variables + reset
-│   └── components.css   — semua style komponen
-│
-├── App.jsx              — routing antar section
-└── main.jsx             — entry point
+kelas-dashboard/
+├── frontend/          # React app
+├── backend/
+│   ├── src/
+│   │   ├── routes/    # auth, users, tugas, dll
+│   │   ├── middleware/ # JWT guard
+│   │   └── index.js
+│   ├── prisma/
+│   │   ├── schema.prisma
+│   │   └── seed.js
+│   └── package.json
+└── package.json       # root — npm workspaces
 ```
 
 ---
 
-## Sambungkan ke backend
+## Setup awal
 
-Semua data ada di `src/data/index.js`. Ganti dengan fetch ke API:
+### 1. Install semua dependency
 
-```js
-// src/hooks/useMahasiswa.js
-import { useState, useEffect } from 'react';
-
-export function useMahasiswa() {
-  const [data, setData] = useState([]);
-  useEffect(() => {
-    fetch('/api/mahasiswa')
-      .then(r => r.json())
-      .then(setData);
-  }, []);
-  return data;
-}
+```bash
+npm install
 ```
 
-## Tech stack
+### 2. Siapkan PostgreSQL
 
-- React 18 + Vite
-- react-router-dom
-- lucide-react
-- CSS murni (tanpa Tailwind)
+Pastikan PostgreSQL sudah berjalan. Buat database:
+
+```sql
+CREATE DATABASE kelas_dashboard;
+```
+
+### 3. Isi file `.env` backend
+
+```bash
+cp backend/.env backend/.env  # sudah ada, tinggal edit
+```
+
+Edit `backend/.env`:
+
+```env
+DATABASE_URL="postgresql://postgres:PASSWORD_KAMU@localhost:5432/kelas_dashboard"
+JWT_SECRET="isi-dengan-string-random-panjang"
+```
+
+Generate JWT secret:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+```
+
+### 4. Jalankan migrasi & seed database
+
+```bash
+cd backend
+npm run db:push    # buat semua tabel
+npm run db:seed    # isi data awal
+```
+
+### 5. Jalankan aplikasi
+
+**Keduanya sekaligus (dari root):**
+
+```bash
+npm run dev
+```
+
+**Atau terpisah:**
+
+```bash
+npm run dev:fe   # frontend → http://localhost:5173
+npm run dev:be   # backend  → http://localhost:3001
+```
+
+---
+
+## Akun default (setelah seed)
+
+| Role      | Username | Password |
+| --------- | -------- | -------- |
+| Admin     | admin    | admin123 |
+| Mahasiswa | rizka    | rizka123 |
+| Mahasiswa | bima     | bima123  |
+| Mahasiswa | dina     | dina123  |
+
+---
+
+## API Endpoints
+
+| Method | Path                    | Auth       | Keterangan             |
+| ------ | ----------------------- | ---------- | ---------------------- |
+| POST   | /api/auth/login         | -          | Login, dapat JWT token |
+| POST   | /api/auth/logout        | User       | Logout                 |
+| GET    | /api/auth/me            | User       | Info user aktif        |
+| GET    | /api/users              | Admin      | Daftar semua user      |
+| POST   | /api/users              | Admin      | Buat akun baru         |
+| DELETE | /api/users/:id          | Admin      | Hapus akun             |
+| PATCH  | /api/users/:id/password | User/Admin | Ganti password         |
+| GET    | /api/kelas              | User       | Info kelas + statistik |
+| GET    | /api/kelas/matkul       | User       | Daftar mata kuliah     |
+| GET    | /api/pengumuman         | User       | Daftar pengumuman      |
+| POST   | /api/pengumuman         | Admin      | Buat pengumuman        |
+| DELETE | /api/pengumuman/:id     | Admin      | Hapus pengumuman       |
+| GET    | /api/tugas              | User       | Daftar tugas           |
+| POST   | /api/tugas              | Admin      | Buat tugas             |
+| PATCH  | /api/tugas/:id          | Admin      | Update tugas           |
+| DELETE | /api/tugas/:id          | Admin      | Hapus tugas            |
+| GET    | /api/materi             | User       | Daftar materi          |
+| POST   | /api/materi             | Admin      | Upload materi          |
+| DELETE | /api/materi/:id         | Admin      | Hapus materi           |
+| GET    | /api/jadwal             | User       | Jadwal mingguan        |
+| GET    | /api/absensi            | User       | Rekap absensi          |
+| POST   | /api/absensi            | Admin      | Buat sesi absensi      |
+| POST   | /api/absensi/:id/detail | Admin      | Input hadir/izin/alpha |
+
+---
+
+## Prisma commands
+
+```bash
+cd backend
+
+npm run db:push      # sync schema ke DB (development)
+npm run db:migrate   # buat migration file (production)
+npm run db:studio    # buka Prisma Studio (GUI database)
+npm run db:seed      # isi ulang data awal
+```

@@ -1,0 +1,68 @@
+/* ── Design tokens ───────────────────────────────── */
+:root {
+  --bg0:      #111120;
+  --bg1:      #1a1a2e;
+  --bg2:      #1e1e2e;
+  --bg3:      #252535;
+  --bg4:      #2a2a3e;
+  --bg5:      #32324a;
+  --border:   #2a2a3a;
+  --border2:  #3d3d5c;
+
+  --purple:   #7c5cbf;
+  --purple2:  #9d7fd4;
+  --purple3:  #b39ddb;
+
+  --text1:    #e2e0f0;
+  --text2:    #a09bb5;
+  --text3:    #6b6785;
+
+  --green:    #43b581;
+  --yellow:   #faa61a;
+  --red:      #f04747;
+  --blue:     #5865f2;
+  --teal:     #4ecdc4;
+
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+
+  --font-mono: 'Consolas', 'Fira Code', 'Courier New', monospace;
+}
+
+/* ── Reset ───────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  background: var(--bg0);
+  color: var(--text1);
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+}
+
+input {
+  font-family: inherit;
+}
+
+/* ── Scrollbar ───────────────────────────────────── */
+::-webkit-scrollbar        { width: 4px; height: 4px; }
+::-webkit-scrollbar-track  { background: var(--bg1); }
+::-webkit-scrollbar-thumb  { background: var(--border2); border-radius: 2px; }
